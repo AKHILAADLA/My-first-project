@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recorder and Text-to-Speech</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { padding-top: 20px; }
+        .audio-container, .text-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Record and Upload Audio</h2>
+                <button id="record" class="btn btn-primary">Record</button>
+                <button id="stop" class="btn btn-secondary" disabled>Stop</button>
+                <p id="timer">00:00</p>
+                <h3>Recorded Files</h3>
+                <ul id="recordingsList"></ul>
+            </div>
+            <div class="col-md-6">
+                <h2>Type in your text to generate audio</h2>
+                <textarea id="textToSpeak" class="form-control" rows="4"></textarea>
+                <button onclick="synthesizeText()" class="btn btn-success mt-2">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('record').addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    audioChunks = [];
+
+                    document.getElementById('record').disabled = true;
+                    document.getElementById('stop').disabled = false;
+
+                    mediaRecorder.addEventListener('dataavailable', function(event) {
+                        audioChunks.push(event.data);
+                    });
+
+                    mediaRecorder.addEventListener('stop', function() {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audio = new Audio(audioUrl);
+                        const listItem = document.createElement('li');
+                        const audioPlayer = document.createElement('audio');
+                        audioPlayer.controls = true;
+                        audioPlayer.src = audioUrl;
+                        listItem.appendChild(audioPlayer);
+                        document.getElementById('recordingsList').appendChild(listItem);
+
+                        document.getElementById('record').disabled = false;
+                        document.getElementById('stop').disabled = true;
+                    });
+                });
+        });
+
+        document.getElementById('stop').addEventListener('click', function() {
+            mediaRecorder.stop();
+        });
+
+        function synthesizeText() {
+            const text = document.getElementById('textToSpeak').value;
+            // Call your backend API to handle the text-to-speech conversion
+        }
+    </script>
+</body>
+</html>
